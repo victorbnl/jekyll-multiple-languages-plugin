@@ -95,9 +95,45 @@ module Jekyll
         end
       end
     end
-    
+
+    # Redirections
     #===========================================================================
-    
+
+    if (site.config["default_locale_in_subfolder"] == false && site.config["language_redirections"] == true)
+      puts "You can't have both the default locale in root and language redirections"
+      exit
+    end
+    if (site.config["language_redirections"])
+      site.documents.each do |d|
+        if (d.collection.label != "posts")
+          path = "_site/" + d.basename
+          FileUtils.touch(path)
+          File.open("_site/" + d.basename, "w") { |f|
+          f.write('
+          <html>
+          <head>
+              <title>Redirecting...</title>
+          </head>
+          <body>
+              <h1>Redirecting...</h1>
+              <script>
+                  let lang = (navigator.userLanguage || navigator.language).substring(0, 2);
+
+                  let supportedLangs = ["' + site.config["languages"].join('", "') + '"]
+
+                  if (supportedLangs.contains(lang)) {
+                      window.location.href = "/" + lang + "' + d.url + '";
+                  } else {
+                      window.location.href = "/' + site.config["languages"][0] + d.url + '";
+                  }
+              </script>
+          </body>
+          </html>
+          ')
+        }
+        end
+      end
+    end
   end
 
 
